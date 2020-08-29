@@ -32,6 +32,7 @@ function load_mailbox(mailbox) {
   document.querySelector('#archive-button').style.display = 'none';
   document.querySelector('#unarchive-button').style.display = 'none';
 
+
   // Show the mailbox name
   document.querySelector('#emails-view').innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
 
@@ -42,28 +43,25 @@ function load_mailbox(mailbox) {
     // Print emails
     console.log(emails);
 
-    emails.forEach(addPost);
+    emails.forEach((email) => {
+      const post = document.createElement('div');
+      post.className = 'card m-3';
+      if (email.read == false) {
+        post.innerHTML = `<div class="card-body m3"><div style="font-weight: bold;">${email.sender}</div>  ${email.subject} <div style="float: right;">${email.timestamp}</div> </div>`
+      } else {
+        post.innerHTML = `<div class="card-body m3" style="background-color: #eee;"><div style="font-weight: bold;">${email.sender}</div>  ${email.subject} <div style="float: right;">${email.timestamp}</div> </div>`
+      }
+      post.addEventListener("click", () => {
+        console.log(email.id);
+        showMail(email.id, mailbox);
+      })
+      document.querySelector('#emails-view').append(post);
+      
+
+    });
   
 })}
 
-// This function will add individual emails to the inbox/archive/sent pages
-function addPost(email) {
-
-  const post = document.createElement('div');
-  post.className = 'card m-3';
-  if (email.read == false) {
-    post.innerHTML = `<div class="card-body m3"><div style="font-weight: bold;">${email.sender}</div>  ${email.subject} <div style="float: right;">${email.timestamp}</div> </div>`
-  } else {
-    post.innerHTML = `<div class="card-body m3" style="background-color: #eee;"><div style="font-weight: bold;">${email.sender}</div>  ${email.subject} <div style="float: right;">${email.timestamp}</div> </div>`
-  }
-  post.addEventListener("click", () => {
-    console.log(email.id);
-    showMail(email.id);
-  
-  
-  })
-  document.querySelector('#emails-view').append(post);
-}
 
 // This function will send the email
 function sendMail() {
@@ -123,14 +121,28 @@ function showMail(id, mailbox) {
         <div class="p-10">${email.body}</div>
       </div>`;
     // With access to mailbox, Add a link to archive the mail
+    reader3000(id)
     if (mailbox == "sent") return;
-    if (email.archived === false) {
-      document.querySelector("#archive-button").style.display = 'block';
+    if (email.archived == false){
+      document.querySelector('#archive-button').style.display = 'block';
+      document.querySelector('#archive-button').addEventListener('click', () => {
+        archiverator3000(id, email.archived);
+
+        load_mailbox('inbox');
+
+    });
     } else {
-      document.querySelector("#unarchive-button").style.display = 'block';
+      document.querySelector('#unarchive-button').style.display = 'block';
+      document.querySelector('#unarchive-button').addEventListener('click', () => {
+        archiverator3000(id, email.archived);
+        load_mailbox('inbox');
+
+      });
     }
   })
+}
   // Api call to mark email as read if not already
+function reader3000(id) {
   fetch(`/emails/${id}`, {
     method: 'PUT',
     body: JSON.stringify({
@@ -139,3 +151,11 @@ function showMail(id, mailbox) {
   })
 }
 
+function archiverator3000(id, current) {
+  fetch(`/emails/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      archived: !current,
+    }),
+  });
+}
