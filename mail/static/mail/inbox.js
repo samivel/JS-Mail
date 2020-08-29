@@ -16,7 +16,7 @@ function compose_email() {
   // Show compose view and hide other views
   document.querySelector('#emails-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'block';
-
+  document.querySelector('#show-mail').style.display = 'none';
   // Clear out composition fields
   document.querySelector('#compose-recipients').value = '';
   document.querySelector('#compose-subject').value = '';
@@ -28,6 +28,9 @@ function load_mailbox(mailbox) {
   // Show the mailbox and hide other views
   document.querySelector('#emails-view').style.display = 'block';
   document.querySelector('#compose-view').style.display = 'none';
+  document.querySelector('#show-mail').style.display = 'none';
+  document.querySelector('#archive-button').style.display = 'none';
+  document.querySelector('#unarchive-button').style.display = 'none';
 
   // Show the mailbox name
   document.querySelector('#emails-view').innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
@@ -43,7 +46,7 @@ function load_mailbox(mailbox) {
   
 })}
 
-
+// This function will add individual emails to the inbox/archive/sent pages
 function addPost(email) {
 
   const post = document.createElement('div');
@@ -53,11 +56,16 @@ function addPost(email) {
   } else {
     post.innerHTML = `<div class="card-body m3" style="background-color: #eee;"><div style="font-weight: bold;">${email.sender}</div>  ${email.subject} <div style="float: right;">${email.timestamp}</div> </div>`
   }
+  post.addEventListener("click", () => {
+    console.log(email.id);
+    showMail(email.id);
   
+  
+  })
   document.querySelector('#emails-view').append(post);
 }
 
-
+// This function will send the email
 function sendMail() {
 
   const banner = document.querySelector("#banner");
@@ -85,3 +93,49 @@ function sendMail() {
   });
 
 }
+
+// This function will show the individual email 
+function showMail(id, mailbox) {
+
+  document.querySelector('#emails-view').style.display = 'none';
+  document.querySelector('#compose-view').style.display = 'none';
+  document.querySelector('#show-mail').style.display = 'block';
+  
+
+  // Api call to render the email that was clicked on
+  fetch(`/emails/${id}`)
+  .then(response => response.json())
+  .then(email => {
+    console.log(email);
+
+    const mail = document.querySelector('#show-mail');
+    mail.className = 'card';
+    mail.innerHTML = `
+      <div class="card-header">
+          <div style="float: right;">${email.timestamp}</div>
+          <div class="small">Subject:</div>
+          <h4>${email.subject}</h4>
+        
+      </div>
+      <div class="card-body">
+        <div class="small">From: ${email.sender}</div>
+        <div class="small">To: ${email.recipients}</div><br>
+        <div class="p-10">${email.body}</div>
+      </div>`;
+    // With access to mailbox, Add a link to archive the mail
+    if (mailbox == "sent") return;
+    if (email.archived === false) {
+      document.querySelector("#archive-button").style.display = 'block';
+    } else {
+      document.querySelector("#unarchive-button").style.display = 'block';
+    }
+  })
+  // Api call to mark email as read if not already
+  fetch(`/emails/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      read : true
+    })
+  })
+}
+
