@@ -31,6 +31,7 @@ function load_mailbox(mailbox) {
   document.querySelector('#show-mail').style.display = 'none';
   document.querySelector('#archive-button').style.display = 'none';
   document.querySelector('#unarchive-button').style.display = 'none';
+  document.querySelector('#reply-button').style.display = 'none';
 
 
   // Show the mailbox name
@@ -122,6 +123,10 @@ function showMail(id, mailbox) {
       </div>`;
     // With access to mailbox, Add a link to archive the mail
     reader3000(id)
+    document.querySelector('#reply-button').style.display = 'block';
+    document.querySelector('#reply-button').addEventListener('click', () => {
+      reply(email)
+    });
     if (mailbox == "sent") return;
     if (email.archived == false){
       document.querySelector('#archive-button').style.display = 'block';
@@ -158,4 +163,18 @@ function archiverator3000(id, current) {
       archived: !current,
     }),
   });
+}
+
+
+
+function reply(email) {
+
+  // Show compose view and hide other views
+  document.querySelector('#emails-view').style.display = 'none';
+  document.querySelector('#compose-view').style.display = 'block';
+  document.querySelector('#show-mail').style.display = 'none';
+  // Clear out composition fields
+  document.querySelector('#compose-recipients').value = email.sender;
+  document.querySelector('#compose-subject').value = `Re: ${email.subject}`;
+  document.querySelector('#compose-body').value = `On ${email.timestamp} ${email.sender} wrote: ${email.body}`;
 }
